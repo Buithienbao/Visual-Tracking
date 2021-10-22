@@ -29,10 +29,10 @@ x4 ......y4 ..... tip point
 # print(pd.__version__)
 def edgeline1(read_file):
 	# Edge line 
-	edge1_p1_x = int(read_file['X'][0])
-	edge1_p1_y = int(read_file['Y'][0])
-	edge1_p2_x = int(read_file['X'][1])
-	edge1_p2_y = int(read_file['Y'][1])
+	edge1_p1_x = int(read_file[0][0])
+	edge1_p1_y = int(read_file[1][0])
+	edge1_p2_x = int(read_file[0][1])
+	edge1_p2_y = int(read_file[1][1])
 
 	edgeline1_point1 = (edge1_p1_x, edge1_p1_y)
 	edgeline1_point2 = (edge1_p2_x, edge1_p2_y)
@@ -43,10 +43,10 @@ def edgeline1(read_file):
 
 def edgeline2(read_file):
 	# Edge line 
-	edge2_p1_x = int(read_file['X'][2])
-	edge2_p1_y = int(read_file['Y'][2])
-	edge2_p2_x = int(read_file['X'][3])
-	edge2_p2_y = int(read_file['Y'][3])
+	edge2_p1_x = int(read_file[0][2])
+	edge2_p1_y = int(read_file[1][2])
+	edge2_p2_x = int(read_file[0][3])
+	edge2_p2_y = int(read_file[1][3])
 
 	edgeline2_point1 = (edge2_p1_x, edge2_p1_y )
 	edgeline2_point2 = (edge2_p2_x, edge2_p2_y ) 
@@ -56,16 +56,16 @@ def edgeline2(read_file):
 
 def midline(read_file): 
 	# Edge line 1 
-	edge1_p1_x = int(read_file['X'][0])
-	edge1_p1_y = int(read_file['Y'][0])
-	edge1_p2_x = int(read_file['X'][1])
-	edge1_p2_y = int(read_file['Y'][1])
+	edge1_p1_x = int(read_file[0][0])
+	edge1_p1_y = int(read_file[1][0])
+	edge1_p2_x = int(read_file[0][1])
+	edge1_p2_y = int(read_file[1][1])
 
 	# Edge line 2 
-	edge2_p1_x = int(read_file['X'][2])
-	edge2_p1_y = int(read_file['Y'][2])
-	edge2_p2_x = int(read_file['X'][3])
-	edge2_p2_y = int(read_file['Y'][3])
+	edge2_p1_x = int(read_file[0][2])
+	edge2_p1_y = int(read_file[1][2])
+	edge2_p2_x = int(read_file[0][3])
+	edge2_p2_y = int(read_file[1][3])
 	# Mid line 
 	midline_p1_x = int((edge1_p1_x + edge2_p1_x) /2)
 	midline_p1_y = int((edge1_p1_y + edge2_p1_y) /2)
@@ -78,13 +78,13 @@ def midline(read_file):
 	return midline
 
 def tipoint(read_file):
-	tippoint_x = int(read_file['X'][4])
-	tippoint_y = int(read_file['Y'][4])
-	tippoint = (tippoint_x, tippoint_y)
+	tippoint_x = int(read_file[0][4])
+	tippoint_y = int(read_file[1][4])
+	tippoint = (tippoint_y, tippoint_x)
 	return tippoint
 
 
-# def AnnotateLines(linepoints, path, filename,  w=1270, h=820, linethickness = 15):
+# def AnnotateLines(linepoints, path, filename,  w=1280, h=720, linethickness = 15):
 # 	image = np.zeros((h,w), dtype=np.uint8)
 # 	image = cv2.line(image, linepoints[0], linepoints[1], 255, linethickness)
 # 	image = cv2.distanceTransform(image,cv2.DIST_L2,5)
@@ -99,7 +99,7 @@ def tipoint(read_file):
 # 	#cv2.imshow('ss',image)
 # 	#cv2.waitKey(200)
 
-# def AnnotateTipPoint(tippoint, path, filename,  w=1270, h=820 ):
+# def AnnotateTipPoint(tippoint, path, filename,  w=1280, h=720 ):
 # 	image = np.zeros((h,w), dtype=np.uint8)
 # 	image = cv2.circle(image, tippoint, radius=0, color=255, thickness=100)
 # 	image = cv2.distanceTransform(image,cv2.DIST_L2,5)
@@ -129,6 +129,7 @@ def drawMidLine(linepoints, path, filename,  w=1280, h=720, linethickness = 1):
 
 	mask = np.zeros((h,w),dtype=np.uint8)
 	mask = cv2.line(mask, linepoints[0], linepoints[1], 255, linethickness)
+	
 	#-----------------------------Classic straight-line Hough transform----------------------------
 	h, theta, d = hough_line(mask)        
 	for _, angle, dist in zip(*hough_line_peaks(h, theta, d, min_distance=9, min_angle=10, threshold=0.5*h.max(), num_peaks=1)):
@@ -140,8 +141,16 @@ def drawMidLine(linepoints, path, filename,  w=1280, h=720, linethickness = 1):
 	y1P = int(y1)
 	#-----------------------------Approximate Line-------------------------------------------------
 	midLine=np.zeros_like(mask, dtype=np.uint8)
-
 	cv2.line(midLine,(x0P,y0P),(x1P,y1P), 255, linethickness)
+
+	midLine = cv2.distanceTransform(midLine,cv2.DIST_L2,5)
+	midLine = cv2.normalize(midLine, midLine, 0, 1.0, cv2.NORM_MINMAX)
+	midLine = np.uint8(midLine*255)
+	# midLine = np.zeros((h,w,3), dtype=np.uint8)
+	# midLine[:,:,0] = mask
+	# midLine[:,:,1] = mask
+	# midLine[:,:,2] = mask
+
 	pathToSave = path + filename + '_midLine.png'
 	cv2.imwrite(pathToSave, midLine)
 
@@ -149,6 +158,7 @@ def drawEdgeLine1(linepoints, path, filename,  w=1280, h=720, linethickness = 1)
 
 	mask = np.zeros((h,w),dtype=np.uint8)
 	mask = cv2.line(mask, linepoints[0], linepoints[1], 255, linethickness)
+	
 	#-----------------------------Classic straight-line Hough transform----------------------------
 	h, theta, d = hough_line(mask)        
 	for _, angle, dist in zip(*hough_line_peaks(h, theta, d, min_distance=9, min_angle=10, threshold=0.5*h.max(), num_peaks=1)):
@@ -160,8 +170,16 @@ def drawEdgeLine1(linepoints, path, filename,  w=1280, h=720, linethickness = 1)
 	y1P = int(y1)
 	#-----------------------------Approximate Line-------------------------------------------------
 	midLine=np.zeros_like(mask, dtype=np.uint8)
-
 	cv2.line(midLine,(x0P,y0P),(x1P,y1P), 255, linethickness)
+
+	midLine = cv2.distanceTransform(midLine,cv2.DIST_L2,5)
+	midLine = cv2.normalize(midLine, midLine, 0, 1.0, cv2.NORM_MINMAX)
+	midLine = np.uint8(midLine*255)
+	# midLine = np.zeros((h,w,3), dtype=np.uint8)
+	# midLine[:,:,0] = mask
+	# midLine[:,:,1] = mask
+	# midLine[:,:,2] = mask
+
 	pathToSave = path + filename + '_edgeLine_Line_1.png'
 	cv2.imwrite(pathToSave, midLine)
 	return midLine
@@ -170,6 +188,7 @@ def drawEdgeLine2(linepoints, path, filename,  w=1280, h=720, linethickness = 1)
 
 	mask = np.zeros((h,w),dtype=np.uint8)
 	mask = cv2.line(mask, linepoints[0], linepoints[1], 255, linethickness)
+
 	#-----------------------------Classic straight-line Hough transform----------------------------
 	h, theta, d = hough_line(mask)        
 	for _, angle, dist in zip(*hough_line_peaks(h, theta, d, min_distance=9, min_angle=10, threshold=0.5*h.max(), num_peaks=1)):
@@ -181,8 +200,16 @@ def drawEdgeLine2(linepoints, path, filename,  w=1280, h=720, linethickness = 1)
 	y1P = int(y1)
 	#-----------------------------Approximate Line-------------------------------------------------
 	midLine=np.zeros_like(mask, dtype=np.uint8)
-
 	cv2.line(midLine,(x0P,y0P),(x1P,y1P), 255, linethickness)
+
+	midLine = cv2.distanceTransform(midLine,cv2.DIST_L2,5)
+	midLine = cv2.normalize(midLine, midLine, 0, 1.0, cv2.NORM_MINMAX)
+	midLine = np.uint8(midLine*255)
+	# midLine = np.zeros((h,w,3), dtype=np.uint8)
+	# midLine[:,:,0] = mask
+	# midLine[:,:,1] = mask
+	# midLine[:,:,2] = mask
+
 	pathToSave = path + filename + '_edgeLine_Line_2.png'
 	cv2.imwrite(pathToSave, midLine)
 	return midLine
@@ -191,22 +218,33 @@ def drawTipPoint(tippoint, path, filename,  w=1280, h=720):
 
 	mask = np.zeros((h,w),dtype=np.uint8)
 	mask[tippoint] = 255
+
+	# image = np.zeros((h,w), dtype=np.uint8)
+	# image = cv2.circle(image, (tippoint[1],tippoint[0]), radius=0, color=255, thickness=100)
+	# image = cv2.distanceTransform(image,cv2.DIST_L2,5)
+	# image = cv2.normalize(image, image, 0, 1.0, cv2.NORM_MINMAX)
+	# image = np.uint8(image*255)
+	# mask = np.zeros((h,w,3), dtype=np.uint8)
+	# mask[:,:,0] = image
+	# mask[:,:,1] = image
+	# mask[:,:,2] = image
+
 	pathToSave = path + filename + '_tipPoint_Approximated.png'
 	cv2.imwrite(pathToSave, mask)
 
-# path to xy coordinates csv file 
-coordscsv =glob.glob('/home/bao/Downloads/trocar_estimation_adrien/liver_tools_trocars_compressed/undistorted/T4/coordinates/*.csv')
+# # path to xy coordinates csv file 
+coordscsv =glob.glob('/home/bao/Downloads/trocar_estimation_adrien/liver_tools_trocars_compressed/manually/undistorted/T2/coordinates/*.txt')
 
 
 # Iterate all csv file 
 for path in coordscsv:
 	filename = os.path.basename(path)
 	filename = os.path.splitext(filename)[0]
-	read_file = pd.read_csv(path)
+	read_file = pd.read_csv(path,header=None, delimiter=",")
 	width = 1280
 	height = 720
 	edgeline1_points = edgeline1(read_file)
-	pathToEdgeLine1 = '/home/bao/Downloads/trocar_estimation_adrien/liver_tools_trocars_compressed/results/T4/'
+	pathToEdgeLine1 = '/home/bao/Downloads/trocar_estimation_adrien/liver_tools_trocars_compressed/manually/results/T2/'
 	print(pathToEdgeLine1)
 	ed1 = drawEdgeLine1(edgeline1_points, pathToEdgeLine1, filename ,width, height, 1 )
 
@@ -225,3 +263,46 @@ for path in coordscsv:
 	ed = ed1+ed2
 	pathToSave = pathToEdgeLine1 + filename + '_edgeLine.png'
 	cv2.imwrite(pathToSave, ed)
+
+# def hamming_distance(chaine1, chaine2):
+#     return sum(c1 != c2 for c1, c2 in zip(chaine1, chaine2))
+
+# def dhash(image, hashSize=8):
+# 	# resize the input image, adding a single column (width) so we
+# 	# can compute the horizontal gradient
+# 	resized = cv2.resize(image, (hashSize + 1, hashSize))
+# 	# compute the (relative) horizontal gradient between adjacent
+# 	# column pixels
+# 	diff = resized[:, 1:] > resized[:, :-1]
+# 	# convert the difference image to a hash
+# 	# return sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+# 	return diff.flatten()
+
+# a1 = cv2.imread("/home/bao/Desktop/test/2021-09-29_130434_VID008_frame840.png")
+# a1 = cv2.cvtColor(a1,cv2.COLOR_BGR2GRAY)
+# h1 = dhash(a1)
+# print(h1)
+
+# a2 = cv2.imread("/home/bao/Desktop/test/2021-09-29_130434_VID008_frame846.png")
+# a2 = cv2.cvtColor(a2,cv2.COLOR_BGR2GRAY)
+# h2 = dhash(a2)
+# print(h2)
+
+# print(hamming_distance(h1,h2))
+
+#trocar 2
+# 1972, 2577, 2625, 2698
+# 3 12 14 18
+# 1990 2070 2490 2542 2636 2753
+# #trocar 4
+# 4457, 4467, 4603, 4615 
+
+# #trocar 3
+# 3749 3975
+# 3785 3802 3943
+
+# #trocar 1
+
+
+# -81.6743658509227	-34.4380686011288	89.8317381415394
+
